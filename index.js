@@ -29,7 +29,17 @@ async function run() {
     await client.connect();
 
     const symptonsCollection=client.db("mindDb").collection("symptons")
+    const usersCollection = client.db('mindDb').collection('users');
 
+
+  //user related api
+  app.post('/users', async (req, res) => {
+    const user = req.body;
+    const result = await usersCollection.insertOne(user);
+    res.send(result);
+});
+
+    //symptoms related api
     app.get('/symptons',async(req,res)=>{
         const result=await symptonsCollection.find().toArray();
         res.send(result);
