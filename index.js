@@ -11,6 +11,26 @@ app.use(cors());
 app.use(express.json());
 
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' });
+  }
+
+  const token = authorization.split(' ')[1];
+
+
+  jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, decoded) => {
+      if (err) {
+          return res.status(401).send({ error: true, message: 'unauthorized access' });
+      }
+
+      req.decoded = decoded;
+      next();
+  })
+}
+
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.s3cfwic.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -26,10 +46,19 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+     client.connect();
 
     const symptonsCollection=client.db("mindDb").collection("symptons")
     const usersCollection = client.db('mindDb').collection('users');
+
+    
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '1hr' })
+
+      res.send({ token });
+
+  })
 
 
   //user related api
@@ -41,6 +70,35 @@ async function run() {
   app.post('/users', async (req, res) => {
     const user = req.body;
     const result = await usersCollection.insertOne(user);
+    res.send(result);
+});
+
+
+  // Verifying admin
+  app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+    const email = req.params.email;
+
+    if (req.decoded.email !== email) {
+        return res.send({ admin: false }); // Use return to exit the function
+    }
+
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    const result = { admin: user?.role === 'admin' };
+    res.send(result);
+});
+
+// Verifying Therapists
+app.get('/users/therapist/:email', verifyJWT, async (req, res) => {
+    const email = req.params.email;
+
+    if (req.decoded.email !== email) {
+        return res.send({ therapist: false }); // Use return to exit the function
+    }
+
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    const result = { therapist: user?.role === 'therapist' };
     res.send(result);
 });
 
