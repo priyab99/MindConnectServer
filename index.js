@@ -50,6 +50,8 @@ async function run() {
 
     const symptonsCollection=client.db("mindDb").collection("symptons")
     const usersCollection = client.db('mindDb').collection('users');
+    const therapistsCollection = client.db('mindDb').collection('therapists');
+    const appointmentsCollection=client.db('mindDb').collection('appointments');
 
     
     app.post('/jwt', (req, res) => {
@@ -132,11 +134,33 @@ app.patch('/users/therapist/:id', async (req, res) => {
   res.send(result);
 });
 
+
     //symptoms related api
-    app.get('/symptons',async(req,res)=>{
-        const result=await symptonsCollection.find().toArray();
-        res.send(result);
-    })
+    //app.get('/symptons',async(req,res)=>{
+       // const result=await symptonsCollection.find().toArray();
+        //res.send(result);
+    //})
+
+    app.get('/therapists',async(req,res)=>{
+      const result=await therapistsCollection.find().toArray();
+      res.send(result);
+  })
+
+  // Handle appointment submissions
+  // Handle appointment submissions
+  app.post('/appointments', async (req, res) => {
+    const appointmentData = req.body;
+    appointmentData.therapistEmail = req.body.therapistEmail; 
+    appointmentData.therapistName=req.body.therapistName;
+    const result = await appointmentsCollection.insertOne(appointmentData);
+    res.send(result);
+  });
+
+  app.get('/appointments',async(req,res)=>{
+    const result=await appointmentsCollection.find().toArray();
+    res.send(result);
+  })
+  
 
 
     // Send a ping to confirm a successful connection
