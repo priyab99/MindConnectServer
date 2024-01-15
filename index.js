@@ -2,6 +2,7 @@ const express = require('express');
 const app=express();
 const cors = require('cors');
 require('dotenv').config()
+const stripe= require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port=process.env.PORT || 5000;
 const jwt=require('jsonwebtoken')
 
@@ -52,6 +53,7 @@ async function run() {
     const usersCollection = client.db('mindDb').collection('users');
     const therapistsCollection = client.db('mindDb').collection('therapists');
     const appointmentsCollection=client.db('mindDb').collection('appointments');
+    const paymentCollection=client.db('mindDb').collection('payments');
 
     
     app.post('/jwt', (req, res) => {
@@ -160,6 +162,30 @@ app.patch('/users/therapist/:id', async (req, res) => {
     const result=await appointmentsCollection.find().toArray();
     res.send(result);
   })
+
+  app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+    const { price } = req.body;
+    const amount = price * 100; // Convert to cents
+  
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      payment_method_types: ['card'],
+    });
+  
+    res.send({
+      clientSecret: paymentIntent.client_secret
+    });
+  });
+  
+
+  //payment 
+  app.post('/payment', verifyJWT, async(req,res)=>{
+    const payment=req.body;
+    const result=await paymentCollection.insertOne(payment);
+    res.send(result);
+  })
+       
   
 
 
