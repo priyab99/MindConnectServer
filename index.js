@@ -185,6 +185,12 @@ app.patch('/users/therapist/:id', async (req, res) => {
     const result=await paymentCollection.insertOne(payment);
     res.send(result);
   })
+
+  app.get('/payment',async(req,res)=>{
+    const result=await paymentCollection.find().toArray();
+    res.send(result);
+  })
+   
        
   
 
