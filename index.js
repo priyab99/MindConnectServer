@@ -49,11 +49,12 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
      client.connect();
 
-    const symptonsCollection=client.db("mindDb").collection("symptons")
+    
     const usersCollection = client.db('mindDb').collection('users');
     const therapistsCollection = client.db('mindDb').collection('therapists');
     const appointmentsCollection=client.db('mindDb').collection('appointments');
     const paymentCollection=client.db('mindDb').collection('payments');
+    const progressCollection=client.db('mindDb').collection('progress');
 
     
     app.post('/jwt', (req, res) => {
@@ -83,7 +84,7 @@ async function run() {
     const email = req.params.email;
 
     if (req.decoded.email !== email) {
-        return res.send({ admin: false }); // Use return to exit the function
+        return res.send({ admin: false }); // Using return to exit the function
     }
 
     const query = { email: email };
@@ -97,7 +98,7 @@ app.get('/users/therapist/:email', verifyJWT, async (req, res) => {
     const email = req.params.email;
 
     if (req.decoded.email !== email) {
-        return res.send({ therapist: false }); // Use return to exit the function
+        return res.send({ therapist: false }); // Using return to exit the function
     }
 
     const query = { email: email };
@@ -106,7 +107,7 @@ app.get('/users/therapist/:email', verifyJWT, async (req, res) => {
     res.send(result);
 });
 
- // Update user role as admin
+ // Updating user role as admin
  app.patch('/users/admin/:id', async (req, res) => {
   const id = req.params.id;
   console.log(id);
@@ -122,7 +123,7 @@ app.get('/users/therapist/:email', verifyJWT, async (req, res) => {
 })
 
 
-// Update user role as therapist
+// Updating user role as therapist
 app.patch('/users/therapist/:id', async (req, res) => {
   const id = req.params.id;
   const filter = { _id: new ObjectId(id) };
@@ -137,19 +138,14 @@ app.patch('/users/therapist/:id', async (req, res) => {
 });
 
 
-    //symptoms related api
-    //app.get('/symptons',async(req,res)=>{
-       // const result=await symptonsCollection.find().toArray();
-        //res.send(result);
-    //})
-
+   //therapists Api
     app.get('/therapists',async(req,res)=>{
       const result=await therapistsCollection.find().toArray();
       res.send(result);
   })
 
-  // Handle appointment submissions
-  // Handle appointment submissions
+  
+  // Handling appointment submissions
   app.post('/appointments', async (req, res) => {
     const appointmentData = req.body;
     appointmentData.therapistEmail = req.body.therapistEmail; 
@@ -163,9 +159,11 @@ app.patch('/users/therapist/:id', async (req, res) => {
     res.send(result);
   })
 
+  //payment related api's
+ 
   app.post('/create-payment-intent', verifyJWT, async (req, res) => {
     const { price } = req.body;
-    const amount = price * 100; // Convert to cents
+    const amount = price * 100; // Converting to cents
   
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
@@ -179,7 +177,7 @@ app.patch('/users/therapist/:id', async (req, res) => {
   });
   
 
-  //payment 
+  
   app.post('/payment', verifyJWT, async(req,res)=>{
     const payment=req.body;
     const result=await paymentCollection.insertOne(payment);
@@ -188,6 +186,18 @@ app.patch('/users/therapist/:id', async (req, res) => {
 
   app.get('/payment',async(req,res)=>{
     const result=await paymentCollection.find().toArray();
+    res.send(result);
+  })
+  
+  //patient progress related API
+  app.post('/progress', async(req,res)=>{
+    const progress=req.body;
+    const result=await progressCollection.insertOne(progress);
+    res.send(result);
+  })
+
+  app.get('/progress',async(req,res)=>{
+    const result=await progressCollection.find().toArray();
     res.send(result);
   })
    
