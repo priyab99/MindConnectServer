@@ -7,8 +7,11 @@ const port=process.env.PORT || 5000;
 const jwt=require('jsonwebtoken')
 
 //middlewares
+app.use(cors({
+  origin: ["http://localhost:5173", "https://mindconnect.web.app"],
+}));
 
-app.use(cors());
+
 app.use(express.json());
 
 
